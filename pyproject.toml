@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "marketplace-api-handler"
+version = "0.1.0"
+description = ""
+authors = ["Dddarknight <9801677@gmail.com>"]
+readme = "README.md"
+packages = [{include = "marketplace_api_handler"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.9.5"
+sqlalchemy = "^2.0.29"
+pydantic-settings = "^2.2.1"
+python-dotenv = "^1.0.1"
+pandas = "^2.2.2"
+openpyxl = "^3.1.2"
+aiogram = "^3.4.1"
+asyncpg = "^0.29.0"
+pytest = "^8.1.1"
+pytest-asyncio = "^0.23.6"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+pytest-asyncio = "^0.23.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

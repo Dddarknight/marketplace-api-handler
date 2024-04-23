@@ -1,0 +1,87 @@
+version: "3.7"
+
+networks:
+  marketplace_api_handler_backend_network:
+    name: marketplace_api_handler_backend_network
+    driver: bridge
+  testing_marketplace_api_handler_network:
+    name: testing_marketplace_api_handler_network
+    driver: bridge
+
+services:
+  marketplace_api_handler_db:
+    build:
+      context: ../
+      dockerfile: Dockerfile.postgres
+    container_name: marketplace_api_handler_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_DB_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - ${POSTGRES_EXTERNAL_PORT}:5432
+    volumes:
+      - marketplace_api_handler_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-U ", $POSTGRES_DB_USER, "-d ", $POSTGRES_DB_NAME ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - marketplace_api_handler_backend_network
+
+  marketplace_api_handler_backend:
+    build:
+      context: ../
+      dockerfile: Dockerfile.backend
+    container_name: marketplace_api_handler_backend
+    env_file:
+      - .env
+    ports:
+      - ${EXTERNAL_APP_PORT}:${APP_PORT}
+    healthcheck:
+      test: curl --fail http://localhost:${APP_PORT}/docs || exit 1
+      retries: 5
+      timeout: 3s
+      interval: 5s
+      start_period: 10s
+    restart: "on-failure:5"
+    networks:
+      - marketplace_api_handler_backend_network
+
+  testing_marketplace_api_handler_backend:
+    build:
+      context: ../
+      dockerfile: Dockerfile.backend
+    container_name: testing_marketplace_api_handler_backend
+    env_file:
+      - .env
+    depends_on:
+      - testing_marketplace_api_handler_db
+    command: "pytest"
+    volumes:
+      - .:/app
+      - test_coverage:/coverage
+    networks:
+      - testing_marketplace_api_handler_network
+
+  testing_marketplace_api_handler_db:
+    build:
+      context: ../
+      dockerfile: Dockerfile.postgres
+    container_name: testing_marketplace_api_handler_db
+    environment:
+      POSTGRES_DB: testing_marketplace_api_handler_db
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    volumes:
+      - test_data:/var/lib/postgresql/data
+    networks:
+      - testing_marketplace_api_handler_network
+
+volumes:
+  marketplace_api_handler_postgres_data:
+  test_coverage:
+  test_data:
